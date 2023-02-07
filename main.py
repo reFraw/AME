@@ -10,7 +10,7 @@ def parse_args():
 
 	# Required parameters
 	group.add_argument('-i', '--image_size', required=True, type=int, help='Input size for test image. If model accept images in format (100, 100, 1) insert 100.')
-	group.add_argument('-c', '--channels', required=True, type=int, help='Channels for test image. If model accept images in format (100, 100, 1) insert 3.')
+	group.add_argument('-c', '--channels', required=True, type=int, help='Channels for test image. If model accept images in format (100, 100, 1) insert 1.')
 	group.add_argument('-m', '--model_path', required=True, type=str, help='Path to model.')
 	group.add_argument('-p', '--image_path', required=True, type=str, help='Path to test image.')
 	group.add_argument('-o', '--output_path', required=True, type=str, help='Path for save output.')
