@@ -1,0 +1,6 @@
+tensorflow
+argparse
+opencv-python-headless
+keras
+matplotlib
+numpy
