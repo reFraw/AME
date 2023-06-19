@@ -117,8 +117,7 @@ class AME:
                 extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
         else:
             input_img = process_image(self.image_path, self.image_size, self.channels)
-            print(self.image_path)
-            folder_name = self.image_path.split('/')[-1].split('.')[0]
+            folder_name = self.image_path.split('/')[-1].replace('.png', '')
             print(folder_name)
             extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
 
