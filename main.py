@@ -42,6 +42,6 @@ if __name__ == '__main__':
 
     print('\n[INFO] Start extraction...')
 
-    extractor.extract()
+    extractor.manage_image()
 
     print('[INFO] Extraction finished.\n')

@@ -10,6 +10,7 @@ import cv2
 from tensorflow.keras import models
 from tensorflow.keras import layers
 
+
 def process_image(img_path, img_size, channels):
     image_array = cv2.imread(img_path)
     image_array = cv2.resize(image_array, (img_size, img_size))
@@ -25,39 +26,15 @@ def process_image(img_path, img_size, channels):
 
     return image_array
 
-class AME:
+def normalize_input(img_array):
 
-    def __init__(self, image_size, channels, model_path, image_path, saving_path, entire_dataset=False,
-                 normalize=False):
-
-        self.image_size = image_size
-        self.channels = channels
-        self.model_path = model_path
-        self.image_path = image_path
-        self.saving_path = saving_path
-        self.entire_dataset = entire_dataset
-        self.normalize = normalize
-
-    def manage_image(self):
-
-        if self.entire_dataset:
-
-            for img in os.listdir(self.image_path):
-                img_path = os.path.join(self.image_path, img)
-                print(img_path)
-                process_image(img_path, self.image_size, self.channels)
-        else:
-            process_image(self.image_path, self.image_size, self.channels)
-
-    def normalize_input(self, image_array):
-
-        normalized_input = image_array.astype('float32') / 255
+        normalized_input = img_array.astype('float32') / 255
 
         return normalized_input
 
-    def extract(self):
+def extract(model_path, input_img, normalize_val, saving_path, img_name):
 
-        model = models.load_model(self.model_path)
+        model = models.load_model(model_path)
 
         # Retrieving convolutional layers name
         conv_layers = list()
@@ -65,13 +42,11 @@ class AME:
             if 'conv' in layer.name:
                 conv_layers.append(layer.name)
 
-        # Processing input image
-        input_image = self.manage_image()
-        if self.normalize:
-            input_image = self.normalize_input(input_image)
+        if normalize_val:
+            input_img = normalize_input(input_img)
 
         # Create saving path
-        save_path = os.path.join('output', self.saving_path)
+        save_path = os.path.join('output', saving_path)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
@@ -82,7 +57,7 @@ class AME:
 
             layer_output = model.get_layer(layer).output
             activation_model = models.Model(inputs=model.input, outputs=layer_output)
-            activation = activation_model(input_image)
+            activation = activation_model(input_img)
 
             n_features = activation.shape[-1]
             n_cols = n_features // images_per_row
@@ -105,6 +80,46 @@ class AME:
             plt.axis('on')
             plt.imshow(display_grid, aspect='auto', cmap='viridis')
 
+            img_folder = os.path.join(save_path, img_name)
+
+            if not os.path.isdir(img_folder):
+
+                os.makedirs(img_folder)
+
             savename = layer + '.png'
-            image_savepath = os.path.join(save_path, savename)
+            image_savepath = os.path.join(img_folder, savename)
             plt.savefig(image_savepath)
+            plt.close('all')
+
+
+class AME:
+
+    def __init__(self, image_size, channels, model_path, image_path, saving_path, entire_dataset=False,
+                 normalize=False):
+
+        self.image_size = image_size
+        self.channels = channels
+        self.model_path = model_path
+        self.image_path = image_path
+        self.saving_path = saving_path
+        self.entire_dataset = entire_dataset
+        self.normalize = normalize
+
+    def manage_image(self):
+
+        if self.entire_dataset:
+
+            for img in os.listdir(self.image_path):
+                img_path = os.path.join(self.image_path, img)
+                input_img = process_image(img_path, self.image_size, self.channels)
+                folder_name = img.split('.')[0]
+                print(folder_name)
+                extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
+        else:
+            input_img = process_image(self.image_path, self.image_size, self.channels)
+            print(self.image_path)
+            folder_name = self.image_path.split('/')[-1].split('.')[0]
+            print(folder_name)
+            extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
+
+
