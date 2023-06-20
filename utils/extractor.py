@@ -117,7 +117,7 @@ class AME:
                 extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
         else:
             input_img = process_image(self.image_path, self.image_size, self.channels)
-            folder_name = self.image_path.split('/')[-1].replace('.png', '')
+            folder_name = self.image_path.split('/')[-1].replace('.apk.png', '')
             print(folder_name)
             extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
 
