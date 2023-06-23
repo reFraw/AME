@@ -17,10 +17,12 @@ def parse_args():
     group.add_argument('-p', '--image_path', required=True, type=str, help='Path to test image.')
     group.add_argument('-o', '--output_path', required=True, type=str, help='Path for save output.')
     # Optional parameters
+    group.add_argument('-l', '--last_layer', required=False, type=bool, default=False, help='Obtain Activations Map of'
+                                                                                            'last layer.')
     group.add_argument('-e', '--entire_dataset', required=False, type=bool, default=False, help='Perform the extraction'
                                                                                             'on all of the images '
                                                                                             'contained inside the '
-                                                                                            'dataset')
+                                                                                            'folder')
     group.add_argument('-n', '--normalize', required=False, type=bool, default=False, help='Normalize image')
 
     arguments = parser.parse_args()
@@ -37,6 +39,7 @@ if __name__ == '__main__':
         arguments.model_path,
         arguments.image_path,
         arguments.output_path,
+        arguments.last_layer,
         arguments.entire_dataset,
         arguments.normalize)
 

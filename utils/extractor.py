@@ -33,7 +33,42 @@ def normalize_input(img_array):
     return normalized_input
 
 
-def extract(model_path, input_img, normalize_val, saving_path, img_name):
+def get_activation_map(model, layer, input_img, images_per_row, img_name, img_folder):
+    layer_output = model.get_layer(layer).output
+    activation_model = models.Model(inputs=model.input, outputs=layer_output)
+    activation = activation_model(input_img)
+
+    n_features = activation.shape[-1]
+    n_cols = n_features // images_per_row
+    size = activation.shape[1]
+    display_grid = np.zeros((size * n_cols, size * images_per_row))
+
+    for col in range(n_cols):
+        for row in range(images_per_row):
+            channel_image = activation[0, :, :, col * images_per_row + row].numpy()
+            channel_image = np.clip(channel_image, 0, 255).astype('uint8')
+            display_grid[col * size: (col + 1) * size, row * size: (row + 1) * size] = channel_image
+
+    scale = 1. / size
+
+    plt.figure(figsize=(2 * scale * display_grid.shape[1], 2 * scale * display_grid.shape[0]))
+
+    plt.yticks(np.arange(0, size * n_cols, size))
+    plt.xticks(np.arange(0, size * images_per_row, size))
+    plt.grid(True)
+    plt.axis('on')
+    plt.imshow(display_grid, aspect='auto', cmap='viridis')
+
+    if '/' in layer:
+        layer = layer.replace('/', '_')
+    filename_save = img_name + '_' + layer + '.png'
+    print(layer)
+    image_savepath = os.path.join(img_folder, filename_save)
+    plt.savefig(image_savepath)
+    plt.close('all')
+
+
+def extract(model_path, input_img, normalize_val, last_layer, saving_path, img_name):
     # Create saving path
     save_path = os.path.join('output', saving_path)
     if not os.path.exists(save_path):
@@ -57,52 +92,29 @@ def extract(model_path, input_img, normalize_val, saving_path, img_name):
     # Extract feature maps for every convolutional layers
     images_per_row = 8
 
-    for layer in conv_layers:
+    if last_layer:
 
-        layer_output = model.get_layer(layer).output
-        activation_model = models.Model(inputs=model.input, outputs=layer_output)
-        activation = activation_model(input_img)
+        last_conv_layer = conv_layers[-1]
 
-        n_features = activation.shape[-1]
-        n_cols = n_features // images_per_row
-        size = activation.shape[1]
-        display_grid = np.zeros((size * n_cols, size * images_per_row))
+        get_activation_map(model, last_conv_layer, input_img,images_per_row, img_name, img_folder)
 
-        for col in range(n_cols):
-            for row in range(images_per_row):
-                channel_image = activation[0, :, :, col * images_per_row + row].numpy()
-                channel_image = np.clip(channel_image, 0, 255).astype('uint8')
-                display_grid[col * size: (col + 1) * size, row * size: (row + 1) * size] = channel_image
+    else:
+        for layer in conv_layers:
 
-        scale = 1. / size
-
-        plt.figure(figsize=(2 * scale * display_grid.shape[1], 2 * scale * display_grid.shape[0]))
-
-        plt.yticks(np.arange(0, size * n_cols, size))
-        plt.xticks(np.arange(0, size * images_per_row, size))
-        plt.grid(True)
-        plt.axis('on')
-        plt.imshow(display_grid, aspect='auto', cmap='viridis')
-
-        if '/' in layer:
-            layer = layer.replace('/', '_')
-        filename_save = img_name + '_' + layer + '.png'
-        print(layer)
-        image_savepath = os.path.join(img_folder, filename_save)
-        plt.savefig(image_savepath)
-        plt.close('all')
+            get_activation_map(model, layer, input_img,images_per_row, img_name, img_folder)
 
 
 class AME:
 
-    def __init__(self, image_size, channels, model_path, image_path, saving_path, entire_dataset=False,
-                 normalize=False):
+    def __init__(self, image_size, channels, model_path, image_path, saving_path, last_layer=False,
+                 entire_dataset=False, normalize=False):
 
         self.image_size = image_size
         self.channels = channels
         self.model_path = model_path
         self.image_path = image_path
         self.saving_path = saving_path
+        self.last_layer = last_layer
         self.entire_dataset = entire_dataset
         self.normalize = normalize
 
@@ -115,9 +127,9 @@ class AME:
                 input_img = process_image(img_path, self.image_size, self.channels)
                 folder_name = img.split('/')[-1].replace('.apk.png', '')
                 print(folder_name)
-                extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
+                extract(self.model_path, input_img, self.normalize, self.last_layer, self.saving_path, folder_name)
         else:
             input_img = process_image(self.image_path, self.image_size, self.channels)
             folder_name = self.image_path.split('/')[-1].replace('.apk.png', '')
             print(folder_name)
-            extract(self.model_path, input_img, self.normalize, self.saving_path, folder_name)
+            extract(self.model_path, input_img, self.normalize, self.last_layer, self.saving_path, folder_name)
