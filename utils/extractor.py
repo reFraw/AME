@@ -85,6 +85,9 @@ def extract(model_path, input_img, normalize_val, saving_path, img_name):
         plt.imshow(display_grid, aspect='auto', cmap='viridis')
 
         filename_save = img_name + '_' + layer + '.png'
+        print(layer)
+        if '\conv' in filename_save:
+            filename_save = filename_save.replace('\conv', '')
         image_savepath = os.path.join(img_folder, filename_save)
         plt.savefig(image_savepath)
         plt.close('all')
